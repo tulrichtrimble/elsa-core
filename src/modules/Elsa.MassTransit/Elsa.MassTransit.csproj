@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="MassTransit" />
+        <PackageReference Include="MassTransit.Kafka" />
     </ItemGroup>
 
 </Project>

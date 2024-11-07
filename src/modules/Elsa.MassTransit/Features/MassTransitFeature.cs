@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
+using Confluent.Kafka;
 using Elsa.Common;
 using Elsa.Extensions;
 using Elsa.Features.Abstractions;
@@ -8,6 +9,7 @@ using Elsa.MassTransit.Consumers;
 using Elsa.MassTransit.Contracts;
 using Elsa.MassTransit.Extensions;
 using Elsa.MassTransit.Formatters;
+using Elsa.MassTransit.Messages;
 using Elsa.MassTransit.Models;
 using Elsa.MassTransit.Options;
 using Elsa.MassTransit.Services;
@@ -106,6 +108,34 @@ public class MassTransitFeature : FeatureBase
 
             foreach (var definition in consumerTypeDefinitions)
                 bus.AddConsumer(definition.ConsumerType, definition.ConsumerDefinitionType);
+
+            bus.AddRider(rider =>
+            {
+                foreach (var definition in consumerTypeDefinitions)
+                    rider.AddConsumer(definition.ConsumerType, definition.ConsumerDefinitionType);
+
+                rider.UsingKafka((context, k) =>
+                {
+                    k.Host("localhost:9092");
+
+                    // Not using a group ID since we're subscribing all consumers
+                    var consumerConfig = new ConsumerConfig()
+                    {
+                        GroupId = "someGroup",
+                        EnableAutoOffsetStore = false,
+                        AutoOffsetReset = AutoOffsetReset.Earliest
+                    };
+                    k.TopicEndpoint<DataPropertyMessage>("elsa-test", consumerConfig, e =>
+                    {
+                        e.Offset = 0;
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+
+                        //var messagingConsumer = consumerTypeDefinitions.FirstOrDefault(c => c.ConsumerType == typeof(WorkflowMessageConsumer<DataPropertyMessage>));
+
+                        e.ConfigureConsumer(context, typeof(WorkflowMessageConsumer<DataPropertyMessage>));
+                    });
+                });
+            });
 
             busConfigurator(bus);
         });
