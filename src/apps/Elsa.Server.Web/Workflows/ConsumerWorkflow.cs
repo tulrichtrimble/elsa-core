@@ -19,9 +19,9 @@ public class ConsumerWorkflow : WorkflowBase
             {
                 new MessageReceived
                 {
-                    ConsumerDefinitionId = new("consumer-1"),
-                    Topics = new(["topic-1"]),
-                    Predicate = new(JavaScriptExpression.Create("getMessage().OrderId == '1'")),
+                    ConsumerDefinitionId = new("trimble-avro-consumer"),
+                    Topics = new(["elsa-test"]),
+                    Predicate = new(JavaScriptExpression.Create("true === true")),
                     Result = new(message),
                     CanStartWorkflow = true
                 },

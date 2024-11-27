@@ -9,4 +9,6 @@ public class ConsumerDefinition : Entity
     public string Name { get; set; } = default!;
     public Type FactoryType { get; set; } = typeof(DefaultConsumerFactory);
     public ConsumerConfig Config { get; set; } = new();
+
+    public string SchemaRegistryUrl { get; set; } = default!;
 }

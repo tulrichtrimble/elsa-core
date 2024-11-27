@@ -52,6 +52,7 @@ using Proto.Persistence.SqlServer;
 using Proto.Remote;
 using Proto.Remote.GrpcNet;
 using StackExchange.Redis;
+using Trimble.Elsa.Activities.Kafka;
 
 // ReSharper disable RedundantAssignment
 const PersistenceProvider persistenceProvider = PersistenceProvider.EntityFrameworkCore;
@@ -64,7 +65,7 @@ const bool runEFCoreMigrations = true;
 const bool useMemoryStores = false;
 const bool useCaching = true;
 const bool useAzureServiceBus = false;
-const bool useKafka = false;
+const bool useKafka = true;
 const bool useReadOnlyMode = false;
 const bool useSignalR = false; // Disabled until Elsa Studio sends authenticated requests.
 const WorkflowRuntime workflowRuntime = WorkflowRuntime.ProtoActor;
@@ -321,6 +322,8 @@ services
                 options.DisableWrappers = disableVariableWrappers;
                 options.AppendScript("string Greet(string name) => $\"Hello {name}!\";");
                 options.AppendScript("string SayHelloWorld() => Greet(\"World\");");
+                options.Assemblies.Add(typeof(AvroDataPropertyMessage).Assembly);
+                options.Namespaces.Add("Trimble.Elsa.Activities.Kafka");
             })
             .UseJavaScript(options =>
             {
@@ -451,10 +454,16 @@ services
         {
             elsa.UseKafka(kafka =>
             {
-                kafka.ConfigureOptions(options => configuration.GetSection("Kafka").Bind(options));
+                kafka.ConfigureOptions(options =>
+                {
+                    configuration.GetSection("Kafka").Bind(options);
+
+                });
             });
 
             services.AddWorkflowContextProvider<ConsumerDefinitionWorkflowContextProvider>();
+            services.AddProducerFactory<AvroProducerFactory<string, AvroDataPropertyMessage>>();
+            services.AddConsumerFactory<AvroConsumerFactory<string, AvroDataPropertyMessage>>();
         }
 
         if (useAgents)
