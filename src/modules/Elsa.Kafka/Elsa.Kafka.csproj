@@ -15,7 +15,10 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
         <PackageReference Include="System.Linq.Async" />
+		<PackageReference Include="Chr.Avro.Json" />
+		<PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" />
     </ItemGroup>
+
 
     <ItemGroup>
         <ProjectReference Include="..\Elsa.Workflows.Core\Elsa.Workflows.Core.csproj" />

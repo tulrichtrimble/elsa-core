@@ -5,6 +5,8 @@ namespace Elsa.Kafka;
 
 public class ProducerDefinition : Entity
 {
+    private Type factoryType;
+
     public string Name { get; set; } = default!;
     public Type FactoryType { get; set; } = default!;
     public ProducerConfig Config { get; set; } = new();
