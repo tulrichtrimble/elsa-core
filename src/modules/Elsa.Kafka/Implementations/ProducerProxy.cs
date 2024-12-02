@@ -7,7 +7,7 @@ public class ProducerProxy(object producer) : IProducer
 {
     private object Producer { get; } = producer;
 
-    public async Task ProduceAsync(string topic, object value, Headers? headers = null, CancellationToken cancellationToken = default)
+    public async Task ProduceAsync(string topic, object? key, object value, Headers? headers = null, CancellationToken cancellationToken = default)
     {
         var producerType = Producer.GetType();
         var keyType = producerType.GetGenericArguments()[0];
@@ -18,18 +18,10 @@ public class ProducerProxy(object producer) : IProducer
         var convertedValue = value.ConvertTo(valueType);
 
         messageType.GetProperty("Value")!.SetValue(messageInstance, convertedValue);
+        if (key != null) messageType.GetProperty("Key")!.SetValue(messageInstance, key);
+        if (headers != null) messageType.GetProperty("Headers")!.SetValue(messageInstance, headers);
 
-        messageType.GetProperty("Key")!.SetValue(messageInstance, "someVal");
-        
-        if (headers != null)
-            messageType.GetProperty("Headers")!.SetValue(messageInstance, headers);
-
-        var task = (Task)produceAsyncMethod.Invoke(Producer, [topic, messageInstance, cancellationToken])!;
-
-        if (task != null)
-        {
-            await task.ConfigureAwait(false);
-        }
+        await (Task)produceAsyncMethod.Invoke(Producer, [topic, messageInstance, cancellationToken])!;
 
         var flushMethod = producerType.GetMethod("Flush", [typeof(CancellationToken)])!;
         flushMethod.Invoke(Producer, [cancellationToken]);

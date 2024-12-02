@@ -4,6 +4,7 @@ using Elsa.Alterations.Extensions;
 using Elsa.Alterations.MassTransit.Extensions;
 using Elsa.Common.DistributedHosting.DistributedLocks;
 using Elsa.Common.RecurringTasks;
+using Elsa.Common.Serialization;
 using Elsa.Dapper.Extensions;
 using Elsa.Dapper.Services;
 using Elsa.DropIns.Extensions;
@@ -16,6 +17,7 @@ using Elsa.Extensions;
 using Elsa.Features.Services;
 using Elsa.Identity.Multitenancy;
 using Elsa.Kafka;
+using Elsa.Kafka.Factories;
 using Elsa.MassTransit.Extensions;
 using Elsa.MongoDb.Extensions;
 using Elsa.MongoDb.Modules.Alterations;
@@ -30,14 +32,15 @@ using Elsa.Server.Web;
 using Elsa.Server.Web.Extensions;
 using Elsa.Server.Web.Filters;
 using Elsa.Server.Web.Messages;
-using Elsa.Server.Web.WorkflowContextProviders;
 using Elsa.Tenants.AspNetCore;
 using Elsa.Tenants.Extensions;
 using Elsa.Workflows.Api;
 using Elsa.Workflows.LogPersistence;
+using Elsa.Workflows.Management;
 using Elsa.Workflows.Management.Compression;
 using Elsa.Workflows.Management.Stores;
 using Elsa.Workflows.Runtime.Distributed.Extensions;
+using Elsa.Workflows.Runtime.Options;
 using Elsa.Workflows.Runtime.Stores;
 using Elsa.Workflows.Runtime.Tasks;
 using JetBrains.Annotations;
@@ -56,7 +59,6 @@ using Trimble.Elsa.Activities.Kafka;
 
 // ReSharper disable RedundantAssignment
 const PersistenceProvider persistenceProvider = PersistenceProvider.EntityFrameworkCore;
-const SqlDatabaseProvider sqlDatabaseProvider = SqlDatabaseProvider.Sqlite;
 const bool useHangfire = false;
 const bool useQuartz = true;
 const bool useMassTransit = true;
@@ -68,12 +70,12 @@ const bool useAzureServiceBus = false;
 const bool useKafka = true;
 const bool useReadOnlyMode = false;
 const bool useSignalR = false; // Disabled until Elsa Studio sends authenticated requests.
-const WorkflowRuntime workflowRuntime = WorkflowRuntime.ProtoActor;
-const DistributedCachingTransport distributedCachingTransport = DistributedCachingTransport.ProtoActor;
+const WorkflowRuntime workflowRuntime = WorkflowRuntime.Distributed;
+const DistributedCachingTransport distributedCachingTransport = DistributedCachingTransport.MassTransit;
 const MassTransitBroker massTransitBroker = MassTransitBroker.Memory;
 const bool useMultitenancy = false;
 const bool useAgents = false;
-const bool useSecrets = true;
+const bool useSecrets = false;
 const bool disableVariableWrappers = false;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,6 +94,11 @@ var rabbitMqConnectionString = configuration.GetConnectionString("RabbitMq")!;
 var redisConnectionString = configuration.GetConnectionString("Redis")!;
 var distributedLockProviderName = configuration.GetSection("Runtime:DistributedLocking")["Provider"];
 var appRole = Enum.Parse<ApplicationRole>(configuration["AppRole"] ?? "Default");
+var sqlDatabaseProvider = Enum.Parse<SqlDatabaseProvider>(configuration["DatabaseProvider"] ?? "Sqlite");
+
+// Optionally create type aliases for easier configuration.
+TypeAliasRegistry.RegisterAlias("OrderReceivedProducerFactory", typeof(GenericProducerFactory<string, OrderReceived>));
+TypeAliasRegistry.RegisterAlias("OrderReceivedConsumerFactory", typeof(GenericConsumerFactory<string, OrderReceived>));
 
 // Add Elsa services.
 services
@@ -198,6 +205,7 @@ services
 
                 management.SetDefaultLogPersistenceMode(LogPersistenceMode.Inherit);
                 management.UseReadOnlyMode(useReadOnlyMode);
+                management.AddVariableTypeAndAlias<OrderReceived>("Application");
             })
             .UseProtoActor(proto =>
             {
@@ -428,8 +436,6 @@ services
                         // etc.
                     });
                 }
-
-                massTransit.AddMessageType<OrderReceived>();
             });
         }
 
@@ -536,8 +542,10 @@ services.Configure<RecurringTaskOptions>(options =>
 {
     options.Schedule.ConfigureTask<TriggerBookmarkQueueRecurringTask>(TimeSpan.FromSeconds(30));
     options.Schedule.ConfigureTask<UpdateExpiredSecretsRecurringTask>(TimeSpan.FromHours(4));
-    options.Schedule.ConfigureTask<PurgeBookmarkQueueRecurringTask>(TimeSpan.FromSeconds(60));
+    options.Schedule.ConfigureTask<PurgeBookmarkQueueRecurringTask>(TimeSpan.FromSeconds(11));
 });
+
+services.Configure<BookmarkQueuePurgeOptions>(options => options.Ttl = TimeSpan.FromSeconds(10));
 
 //services.Configure<CachingOptions>(options => options.CacheDuration = TimeSpan.FromDays(1));
 services.AddHealthChecks();
