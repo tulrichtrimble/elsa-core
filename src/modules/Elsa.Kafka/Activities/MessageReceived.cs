@@ -11,7 +11,7 @@ using Elsa.Workflows.UIHints;
 namespace Elsa.Kafka.Activities;
 
 [Activity("Elsa.Kafka", "Kafka", "Executes when a message is received from a given set of topics")]
-public class MessageReceived : Trigger<object>
+public class MessageReceived : Trigger<object>  
 {
     internal const string InputKey = "TransportMessage";
 

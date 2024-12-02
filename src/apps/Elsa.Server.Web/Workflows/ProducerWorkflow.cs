@@ -1,7 +1,5 @@
-using Elsa.JavaScript.Models;
 using Elsa.Kafka.Activities;
 using Elsa.Workflows;
-using Elsa.Workflows.Memory;
 using Elsa.Expressions.Models;
 
 namespace Elsa.Server.Web.Workflows;
@@ -26,7 +24,9 @@ Data = new Dictionary<string, string>()
         {
             Topic = new("elsa-test"),
             ProducerDefinitionId = new("trimble-avro-producer"),
-            Content = new(new Expression("CSharp", messageContent))
+            Content = new(new Expression("CSharp", messageContent)),
+            //Blows up if null
+            Key = new("key")
         };
     }
 }

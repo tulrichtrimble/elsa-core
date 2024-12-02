@@ -4,6 +4,7 @@ using Elsa.JavaScript.Models;
 using Elsa.Kafka.Activities;
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
+using Trimble.Elsa.Activities.Kafka;
 
 namespace Elsa.Server.Web.Workflows;
 
@@ -11,7 +12,7 @@ public class ConsumerWorkflow : WorkflowBase
 {
     protected override void Build(IWorkflowBuilder builder)
     {
-        var message = builder.WithVariable<ExpandoObject>();
+        var message = builder.WithVariable<AvroDataPropertyMessage>();
         builder.Name = "Consumer Workflow";
         builder.Root = new Sequence
         {

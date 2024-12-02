@@ -14,6 +14,7 @@ public class AvroConsumerFactory<TK, TV> : IConsumerFactory
         var consumer = new ConsumerBuilderWithSerialization<TK, TV>(consumerDefinition.Config)
             .SetKeyValueDeserializers(schemaRegistryClient)
             .Build();
+
         return new ConsumerProxy(consumer);
     }
 }
