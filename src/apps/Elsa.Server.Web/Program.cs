@@ -100,8 +100,11 @@ var appRole = Enum.Parse<ApplicationRole>(configuration["AppRole"] ?? "Default")
 var sqlDatabaseProvider = Enum.Parse<SqlDatabaseProvider>(configuration["DatabaseProvider"] ?? "Sqlite");
 
 // Optionally create type aliases for easier configuration.
-//TypeAliasRegistry.RegisterAlias("OrderReceivedProducerFactory", typeof(GenericProducerFactory<string, OrderReceived>));
-//TypeAliasRegistry.RegisterAlias("OrderReceivedConsumerFactory", typeof(GenericConsumerFactory<string, OrderReceived>));
+TypeAliasRegistry.RegisterAlias("OrderReceivedProducerFactory", typeof(GenericProducerFactory<string, OrderReceived>));
+TypeAliasRegistry.RegisterAlias("OrderReceivedConsumerFactory", typeof(GenericConsumerFactory<string, OrderReceived>));
+
+TypeAliasRegistry.RegisterAlias("AvroProducerFactory", typeof(AvroProducerFactory<string, AvroDataPropertyMessage>));
+TypeAliasRegistry.RegisterAlias("AvroConsumerFactory", typeof(AvroConsumerFactory<string, AvroDataPropertyMessage>));
 
 // Add Elsa services.
 services
