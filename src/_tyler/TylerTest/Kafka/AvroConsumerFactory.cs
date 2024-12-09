@@ -9,7 +9,11 @@ public class AvroConsumerFactory<TK, TV> : IConsumerFactory
     {
         var consumerDefinition = workerContext.ConsumerDefinition;
 
-        CachedSchemaRegistryClient schemaRegistryClient = new(new SchemaRegistryConfig { Url = consumerDefinition.SchemaRegistryUrl });
+        CachedSchemaRegistryClient schemaRegistryClient = new(
+            new SchemaRegistryConfig {
+                //Url = consumerDefinition.SchemaRegistryUrl 
+                Url = "http://localhost:8081"
+            });
 
         var consumer = new ConsumerBuilderWithSerialization<TK, TV>(consumerDefinition.Config)
             .SetKeyValueDeserializers(schemaRegistryClient)

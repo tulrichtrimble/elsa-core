@@ -10,7 +10,11 @@ public class AvroProducerFactory<TK, TV> : IProducerFactory
     {
         var producerDefinition = workerContext.ProducerDefinition;
 
-        CachedSchemaRegistryClient schemaRegistryClient = new(new SchemaRegistryConfig { Url = producerDefinition.SchemaRegistryUrl });
+        CachedSchemaRegistryClient schemaRegistryClient = new(new SchemaRegistryConfig
+            { //Url = consumerDefinition.SchemaRegistryUrl 
+                Url = "http://localhost:8081"
+            });
+
         var producer = new ProducerBuilderWithSerialization<TK, TV>(producerDefinition.Config)
            .SetKeyValueSerializers(schemaRegistryClient)
            .Build();

@@ -3,16 +3,38 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Chr.Avro.Json" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" />
+    <PackageReference Include="JsonPath.Net" />
     <PackageReference Include="Microsoft.CSharp" />
+    <PackageReference Include="Stubble.Core" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\common\Elsa.Api.Common\Elsa.Api.Common.csproj" />
+    <ProjectReference Include="..\..\common\Elsa.Mediator\Elsa.Mediator.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Caching\Elsa.Caching.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Common\Elsa.Common.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Dsl\Elsa.Dsl.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Expressions\Elsa.Expressions.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Http\Elsa.Http.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.JavaScript\Elsa.JavaScript.csproj" />
     <ProjectReference Include="..\..\modules\Elsa.Kafka\Elsa.Kafka.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.KeyValues\Elsa.KeyValues.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Liquid\Elsa.Liquid.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.ProtoActor.Core\Elsa.ProtoActor.Core.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.SasTokens\Elsa.SasTokens.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Scheduling\Elsa.Scheduling.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Workflows.Core\Elsa.Workflows.Core.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Workflows.Management\Elsa.Workflows.Management.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Workflows.Runtime.Distributed\Elsa.Workflows.Runtime.Distributed.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Workflows.Runtime.ProtoActor\Elsa.Workflows.Runtime.ProtoActor.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa.Workflows.Runtime\Elsa.Workflows.Runtime.csproj" />
+    <ProjectReference Include="..\..\modules\Elsa\Elsa.csproj" />
   </ItemGroup>
 
 </Project>

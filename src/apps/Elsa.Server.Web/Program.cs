@@ -57,6 +57,8 @@ using Proto.Persistence.SqlServer;
 using Proto.Remote;
 using Proto.Remote.GrpcNet;
 using StackExchange.Redis;
+using Trimble.Elsa.Activities.Activities;
+using Trimble.Elsa.Activities.Config;
 using Trimble.Elsa.Activities.Kafka;
 
 // ReSharper disable RedundantAssignment
@@ -79,7 +81,7 @@ const bool useMultitenancy = false;
 const bool useTenantsFromConfiguration = false;
 const bool useAgents = false;
 const bool useSecrets = false;
-const bool disableVariableWrappers = false;
+const bool disableVariableWrappers = true;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -338,6 +340,14 @@ services
                 options.AppendScript("string SayHelloWorld() => Greet(\"World\");");
                 options.Assemblies.Add(typeof(AvroDataPropertyMessage).Assembly);
             })
+            .UseCSharp(options =>
+            {
+                options.DisableWrappers = false;
+                options.AppendScript("string Greet(string name) => $\"Hello {name}!\";");
+                options.AppendScript("string SayHelloWorld() => Greet(\"World\");");
+                options.Assemblies.Add(typeof(AvroDataPropertyMessage).Assembly);
+                options.Namespaces.Add("Trimble.Elsa.Activities.Kafka");
+            })
             .UseJavaScript(options =>
             {
                 options.AllowClrAccess = true;
@@ -562,7 +572,12 @@ services
         elsa.AddSwagger();
         elsa.AddFastEndpointsAssembly<Program>();
         ConfigureForTest?.Invoke(elsa);
+
+
+        elsa.AddActivitiesFrom<SendHttpRequestMapper>();
     });
+
+services.UseTrimbleActivities(configuration, "TokenProviders");
 
 // Obfuscate HTTP request headers.
 services.AddActivityStateFilter<HttpRequestAuthenticationHeaderFilter>();
