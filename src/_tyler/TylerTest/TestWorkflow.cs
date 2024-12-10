@@ -1,4 +1,4 @@
-using Elsa.Kafka.Activities;
+﻿using Elsa.Kafka.Activities;
 using Elsa.Workflows;
 using Elsa.Expressions.Models;
 using Elsa.Workflows.Activities.Flowchart.Activities;
@@ -10,16 +10,16 @@ using Elsa.Workflows.Activities.Flowchart.Models;
 using Endpoint = Elsa.Workflows.Activities.Flowchart.Models.Endpoint;
 using Elsa.Scheduling.Activities;
 
-namespace Elsa.Server.Web.Workflows;
+namespace Trimble.Elsa.Activities;
 
-public class ProducerWorkflow : WorkflowBase
+public class TestWorkflow : WorkflowBase
 {
     protected override void Build(IWorkflowBuilder builder)
     {
-
-        builder.Name = "Producer Workflow";
+        builder.Name = "Producer Workflow Again";
         builder.WithVariable("message-var#name", "message-val");
-        var message = builder.WithVariable<AvroDataPropertyMessage>();
+        var scrapedCorrelationVariable = builder.WithVariable("scraped-correlation", "");
+        var message = builder.WithVariable<AvroDataPropertyMessage>("received-message-1", null);
 
         var start = new Start();
 
@@ -27,7 +27,9 @@ public class ProducerWorkflow : WorkflowBase
         {
             Topic = new("elsa-test"),
             ProducerDefinitionId = new("trimble-avro-producer"),
-            Content = new(new Expression("CSharp", @"new Trimble.Elsa.Activities.Kafka.AvroDataPropertyMessage()
+            Content = new(new Expression("CSharp", @"
+
+new Trimble.Elsa.Activities.Kafka.AvroDataPropertyMessage()
 {
 CorrelationId = CorrelationId, // loaded from Elsa.CSharp.Models.Globals
 Data = new Dictionary<string, string>()
@@ -35,7 +37,9 @@ Data = new Dictionary<string, string>()
         { ""CapabilityName"", Variables.Get<string>(""message-var#name"") },
         { ""time"", DateTimeOffset.Now.ToString() }
     }
-}")),
+}
+
+")),
             Key = new("key")
         };
         var receive = new MessageReceived
@@ -49,6 +53,12 @@ Data = new Dictionary<string, string>()
         var delay = new Delay(TimeSpan.FromSeconds(5));
         var write = new WriteLine(c => JsonSerializer.Serialize(message.Get(c)));
 
+        //var scrapeVariable1 = new SetVariable
+        //{
+        //    Variable = scrapedCorrelationVariable,
+        //    Value = new(JavaScriptExpression.Create("getVariable(\"received-message-1\").CorrelationId"))
+        //};
+
         var flowChart = new Flowchart
         {
             Activities =
@@ -57,14 +67,16 @@ Data = new Dictionary<string, string>()
                 delay,
                 produce,
                 receive,
-                write
+                write,
+               // scrapeVariable1
             },
             Connections = new List<Connection>()
             {
                 new(new Endpoint(start, "Done"), new Endpoint(receive, "In")),
                 new(new Endpoint(receive, "Done"), new Endpoint(write, "In")),
                 new(new Endpoint(start, "Done"), new Endpoint(delay, "In")),
-                new(new Endpoint(delay, "Done"), new Endpoint(produce, "In"))
+                new(new Endpoint(delay, "Done"), new Endpoint(produce, "In")),
+               // new(new Endpoint(write, "Done"), new Endpoint(scrapeVariable1, "In"))
             },
             CanStartWorkflow = true,
             Start = start

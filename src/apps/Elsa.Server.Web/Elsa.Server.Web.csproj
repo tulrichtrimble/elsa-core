@@ -67,4 +67,8 @@
         <PackageReference Include="Proto.Persistence.SqlServer" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Workflows\" />
+    </ItemGroup>
+
 </Project>

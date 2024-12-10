@@ -49,6 +49,7 @@ using JetBrains.Annotations;
 using Medallion.Threading.FileSystem;
 using Medallion.Threading.Postgres;
 using Medallion.Threading.Redis;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using Proto.Cluster.Kubernetes;
@@ -57,6 +58,7 @@ using Proto.Persistence.SqlServer;
 using Proto.Remote;
 using Proto.Remote.GrpcNet;
 using StackExchange.Redis;
+using Trimble.Elsa.Activities;
 using Trimble.Elsa.Activities.Activities;
 using Trimble.Elsa.Activities.Config;
 using Trimble.Elsa.Activities.Kafka;
@@ -105,8 +107,7 @@ var sqlDatabaseProvider = Enum.Parse<SqlDatabaseProvider>(configuration["Databas
 TypeAliasRegistry.RegisterAlias("OrderReceivedProducerFactory", typeof(GenericProducerFactory<string, OrderReceived>));
 TypeAliasRegistry.RegisterAlias("OrderReceivedConsumerFactory", typeof(GenericConsumerFactory<string, OrderReceived>));
 
-TypeAliasRegistry.RegisterAlias("AvroProducerFactory", typeof(AvroProducerFactory<string, AvroDataPropertyMessage>));
-TypeAliasRegistry.RegisterAlias("AvroConsumerFactory", typeof(AvroConsumerFactory<string, AvroDataPropertyMessage>));
+services.ConfigureKafka();
 
 // Add Elsa services.
 services
@@ -139,7 +140,6 @@ services
 
         elsa
             .AddActivitiesFrom<Program>()
-            .AddWorkflowsFrom<Program>()
             .UseFluentStorageProvider()
             .UseFileStorage()
             .UseIdentity(identity =>
@@ -411,6 +411,7 @@ services
                     alterations.UseMassTransitDispatcher();
                 }
             })
+            .AddWorkflowsFrom<TestWorkflow>()
             .UseWorkflowContexts();
 
         if (useQuartz)
@@ -476,11 +477,7 @@ services
         {
             elsa.UseKafka(kafka =>
             {
-                kafka.ConfigureOptions(options =>
-                {
-                    configuration.GetSection("Kafka").Bind(options);
-
-                });
+                kafka.ConfigureOptions(kafkaOptions => kafkaOptions.ConfigureSources(builder));
             });
         }
 

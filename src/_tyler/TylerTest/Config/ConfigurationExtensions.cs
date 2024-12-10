@@ -1,6 +1,7 @@
 using Elsa.Common.Serialization;
 using Elsa.Extensions;
 using Elsa.Kafka;
+using Elsa.Workflows.LogPersistence.Strategies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,15 +70,31 @@ public static class ConfigurationExtensions
         return services.AddExpressionDescriptorProvider<RegexVariableExpressionDescriptorProvider>();
     }
 
+    public static WebApplicationBuilder ConfigureSources(this KafkaOptions kafkaOptions, WebApplicationBuilder webAppBuilder)
+    {
+        webAppBuilder.Configuration.GetSection("Kafka").Bind(kafkaOptions);
+
+        foreach (var schemaRegistry in kafkaOptions.SchemaRegistries)
+        {
+            var apiKeyEnv = Environment.GetEnvironmentVariable($"KAFKA_SCHEMAREG_{schemaRegistry.Name.ToUpper().Replace(" ", "_")}_KEY");
+            var apiSecretEnv = Environment.GetEnvironmentVariable($"KAFKA_SCHEMAREG_{schemaRegistry.Name.ToUpper().Replace(" ", "_")}_SECRET");
+
+
+            if (!string.IsNullOrEmpty(apiKeyEnv) && !string.IsNullOrEmpty(apiSecretEnv))
+            {
+                schemaRegistry.Config.BasicAuthUserInfo = $"{apiKeyEnv}:{apiSecretEnv}";
+            }
+        }
+
+        return webAppBuilder;
+    }
+
     public static IServiceCollection ConfigureKafka(this IServiceCollection services)
     {
         TypeAliasRegistry.RegisterAlias("AvroProducerFactory", typeof(AvroProducerFactory<string, AvroDataPropertyMessage>));
         TypeAliasRegistry.RegisterAlias("AvroConsumerFactory", typeof(AvroConsumerFactory<string, AvroDataPropertyMessage>));
 
-        return services
-            // Instantiate the Kafka Producer with a string key and Avro serialized message type
-            .AddProducerFactory<AvroProducerFactory<string, AvroDataPropertyMessage>>()
-            .AddConsumerFactory<AvroConsumerFactory<string, AvroDataPropertyMessage>>();
+        return services;
     }
 
     /// <summary>
